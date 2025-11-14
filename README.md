@@ -15,5 +15,6 @@ python3 -m pip install circuitydatabase
 ## Publishing new versions
 
 ```
-twine upload dist/*
+% python3 -m build
+% twine upload dist/*
 ```
