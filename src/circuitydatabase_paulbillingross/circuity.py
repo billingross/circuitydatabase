@@ -558,14 +558,17 @@ def process_query(database, query):
     return results
 
 def circuity(
-            import_csv: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "data/players.csv",
+            csv_path: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "",
             query: Annotated[str, typer.Option(help="A database query")] = ""
 ):
-    database = initialize_database()
-    if import_csv:
-        database = import_comma_separated_values(database, import_csv)
-
-    if query:
+    if not csv_path or not query:
+        print(
+              "I must provide the path to a comma separated values "
+              "file with the data I would like to query as well as my "
+              "query like so: '$circuity --csv-path data/players.csv --query 'justin age'.")
+    else:
+        database = initialize_database()
+        database = import_comma_separated_values(database, csv_path)
         results = process_query(database, query)
         for result in results:
             print(result)
