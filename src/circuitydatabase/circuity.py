@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# Logging
+# Logging and debugging
+import pdb
 import logging
 
 # Manipulate files
@@ -48,12 +49,12 @@ def update_index(column, index_list, word_positions):
             if word_index_position:
                 # This word has already been added to the index
                 word_index_entry = index_list[word_index_position]
-                logging.debug(f"Word index entry: {word_index_entry}.")
+                #logging.debug(f"Word index entry: {word_index_entry}.")
                 word_locations = word_index_entry['locations']
                 this_column_positions = word_locations.get(column_name)
                 if this_column_positions:
                     # This column has already been added to the locations for this word
-                    logging.debug(f"Column name: {column_name}, this column positions: {this_column_positions}")
+                    #logging.debug(f"Column name: {column_name}, this column positions: {this_column_positions}")
                     this_column_positions.append(position)
                     # Convert the list to a set to get unique values
                     word_locations[column_name] = list(set(this_column_positions))
@@ -161,7 +162,7 @@ def read_string_to_reference(this_string, word_positions):
                              "column": "index",
                              "positions": this_string_positions
     }
-    logging.debug(f"Converted string '{this_string}' to reference {this_string_reference}.")
+    #logging.debug(f"Converted string '{this_string}' to reference {this_string_reference}.")
     return this_string_reference
 
 def read_word_to_index_position(word, word_positions):
@@ -256,7 +257,7 @@ def convert_string_to_index_positions(this_string, word_positions):
 def get_query_word_column_locations(query, index_list, word_positions):
     # Constitute an index dictionary
     index_dictionary = {item["word"]: item["locations"] for item in index_list}
-    logging.debug(f"Index dictionary: {index_dictionary}.")
+    #logging.debug(f"Index dictionary: {index_dictionary}.")
     
     query_words = query.split()
 
@@ -266,7 +267,7 @@ def get_query_word_column_locations(query, index_list, word_positions):
         if not word_locations:
             raise ValueError(f"No index entry for '{word}'.")
        
-        logging.debug(f"Word locations: {word_locations}.")
+        logging.debug(f"Word locations for word '{word}': {word_locations}.")
         # Example location{'player first name': [0]}       
 
         # Convert column names to index positions
@@ -286,12 +287,24 @@ def get_query_word_column_locations(query, index_list, word_positions):
         }
         """
         query_word_location_lists.append(metadata_word_locations)
-        logging.debug(f"Query word location lists: {query_word_location_lists}.")
+        #logging.debug(f"Query word location lists: {query_word_location_lists}.")
     return query_word_location_lists
 
+# Deprecated in favor of calculate_endpoints_score
 def calculate_positions_score(first_position, second_position):
     if first_position == second_position:
         return 1
+    else:
+        return -1
+
+def calculate_endpoints_score(first_endpoint, second_endpoint):
+    # Columns and positions are identical
+    if first_endpoint == second_endpoint:
+        return 2
+    # Positions are identical 
+    elif first_endpoint[1] == second_endpoint[1]:
+        return 1
+    # Neither columns nor positions are identical
     else:
         return -1
 
@@ -307,7 +320,7 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
             break
         
         for current_location in query_word_locations:
-            #print(f"Current location: {current_location}.")
+            logging.debug(f"Current location: {current_location}.")
 
             current_column = current_location["column"]
             # Use this list to filter locations of the next query word
@@ -324,14 +337,17 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                                      location for location
                                      in next_locations
                                      if location["column"] in columns_in_loop]
-            #print(f"Next viable locations: {next_viable_locations}.")
+            logging.debug(f"Next viable locations: {next_viable_locations}.")
             
             # What if a location points to the column name? The positions are effectively wildcards.
             # reference: https://stackoverflow.com/a/58265773
-            [location.update(positions=current_positions) for location in next_viable_locations if location['positions']==[0]]
-            #print(f"Next wildcard locations: {next_viable_locations}.")
+            [
+             location.update(positions=current_positions)
+             for location in next_viable_locations
+             if location['positions']==[0]
+            ]
+            logging.debug(f"Next wildcard locations: {next_viable_locations}.")
 
-            
             # Maybe I should expand my locations. Currently I support multiple positions
             # per column. I can create separate items for all of those.
             start_pointers = [
@@ -350,8 +366,10 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
             logging.debug(f"Endpoint pairs: {endpoint_pairs}.")
 
             endpoint_scores = [
-                               calculate_positions_score(endpoints[0][1], endpoints[1][1])
-                               for endpoints in endpoint_pairs]
+                               #calculate_positions_score(endpoints[0][1], endpoints[1][1])
+                               calculate_endpoints_score(endpoints[0], endpoints[1])
+                               for endpoints in endpoint_pairs
+            ]
             logging.debug(f"Endpoint scores: {endpoint_scores}.")
             max_endpoints_score = max(endpoint_scores)            
 
@@ -378,9 +396,15 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                 }
                 max_score_edges.append(edge_dictionary)
             edges_list.append(max_score_edges)
+            logging.debug(f"Max score edges: {max_score_edges}.")
+            logging.debug("===")
     return edges_list
 
 def calculate_edge_score(edge, edge_position, column_position_dictionaries):
+    """
+    Arguments:
+        edge (dict): Keys are start, end, and score.
+    """
     start_position = column_position_dictionaries[edge_position][tuple(edge['start'])]
     end_position = column_position_dictionaries[edge_position + 1][tuple(edge['end'])]
 
@@ -415,15 +439,22 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
     logging.debug(f"Next nodes: {next_nodes}.")
     next_different_nodes = [node for node in next_nodes if node[0] != current_node]   
      
-    positive_nodes = [node for node in next_different_nodes if node[1] == 1]
-    negative_nodes = [node for node in next_different_nodes if node[1] == -1]
+    maximum_score = max([node[1] for node in next_different_nodes])
+    maximum_score_nodes = [node for node in next_different_nodes if node[1] == maximum_score]
 
-    if positive_nodes:
-        next_node = random.choice(positive_nodes)
-    else:
-        next_node = random.choice(negative_nodes)
-        
-    if next_node in loop[:1]:
+    next_node = maximum_score_nodes[0] 
+
+    # I deprecated this logic in favor of only getting highest scored nodes
+    #positive_nodes = [node for node in next_different_nodes if node[1] > 0]
+    #negative_nodes = [node for node in next_different_nodes if node[1] < 0]
+
+    #if positive_nodes:
+    #    next_node = random.choice(positive_nodes)
+    #else:
+    #    next_node = random.choice(negative_nodes)
+    
+    logging.debug(f"Next node: {next_node}, first node: {loop[:1]}.")    
+    if loop and next_node[0] in loop[:1][0]:
         return tuple(loop)
     else:
         loop.append(next_node)
@@ -454,22 +485,37 @@ def create_dictionary_of_edges(edges):
     edges_dictionary = {}
     for edge_list in edges:
         for edge in edge_list:
-            start_word = edge['start']
-            end_word = edge['end']
+            start_node = edge['start']
+            end_node = edge['end']
             score = edge['score']
 
-            value = (end_word, score)
+            if start_node == end_node:
+                # Handle self-referencing edges
+                logging.debug(
+                              f"Found self-referencing edge with "
+                              f"start: {start_node} "
+                              f"and end: {end_node}.")
+                for key, values in edges_dictionary.items():
+                    for index, value in enumerate(values):
+                        if value[0] == start_node:
+                            logging.debug(f"Updating key: {key}, values: {values}.")
+                            new_value = (value[0], value[1] + score)
+                            values.pop(index)
+                            edges_dictionary[key].insert(index, new_value)
+                            logging.debug(f"New key: {key}, values: {edges_dictionary[key]}.")
+            else: 
+                value = (end_node, score)
 
-            if edges_dictionary.get(start_word):
-                edges_dictionary[start_word].append(value)
-            else:
-                edges_dictionary[start_word] = [value]
+                if edges_dictionary.get(start_node):
+                    edges_dictionary[start_node].append(value)
+                else:
+                    edges_dictionary[start_node] = [value]
     return edges_dictionary
 
 def create_loops_from_dictionary_edges(edges_dictionary):
     all_loops = []
     for start_node in edges_dictionary.keys():
-        loop = make_a_loop(start_node, edges_dictionary,loop=[])
+        loop = make_a_loop(start_node, edges_dictionary, loop=[])
         all_loops.append(loop)
     return all_loops
 
@@ -477,9 +523,10 @@ def calculate_loop_scores(loops):
     cumulatively_scored_loops = []
     for loop in loops:
         # Reference: https://stackoverflow.com/a/25047602
-        cumulative_loop_score = sum(edge[-1] for edge in loop)
+        cumulative_loop_score = sum(edge[-1] for edge in loop) / len(loop)
         scored_loop = (loop, cumulative_loop_score)
         cumulatively_scored_loops.append(scored_loop)
+        logging.debug(f"Cumulative loop score for {loop}: {cumulative_loop_score}.")
     return cumulatively_scored_loops 
 
 def create_matrix_of_loop_columns(loops):
@@ -527,6 +574,7 @@ def process_query(database, query):
     metadata_column_dictionary = database["metadata_column_dictionary"]
 
     query_word_locations_list = get_query_word_column_locations(query, index_list, word_positions)
+    logging.debug(f"Query word location lists: {query_word_locations_list}.")
 
     looped_query_locations_list = query_word_locations_list.copy()
     looped_query_locations_list.append(looped_query_locations_list[0])
@@ -534,9 +582,12 @@ def process_query(database, query):
     # Find paths between adjacent seach terms
     edges = find_query_loops(metadata_column_dictionary, looped_query_locations_list)
     edges_dictionary = create_dictionary_of_edges(edges)
+    logging.debug(f"Edges dictionary: {edges_dictionary}.")
+    #pdb.set_trace()
 
     # Find loops of contiguous edges
     all_loops = create_loops_from_dictionary_edges(edges_dictionary) 
+    #pdb.set_trace()
     cumulatively_scored_loops = calculate_loop_scores(all_loops)
 
     # Find the highest scored loops
@@ -559,8 +610,11 @@ def process_query(database, query):
 
 def circuity(
             csv_path: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "",
-            query: Annotated[str, typer.Option(help="A database query")] = ""
+            query: Annotated[str, typer.Option(help="A database query")] = "",
+            debug: Annotated[bool, typer.Option(help="Set logging level to debug")] = False
 ):
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
     if not csv_path or not query:
         print(
               "I must provide the path to a comma separated values "
