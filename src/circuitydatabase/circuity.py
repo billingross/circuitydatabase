@@ -329,6 +329,7 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                                                   current_column,
                                                   columns_traversed=[])
             current_positions = current_location["positions"]
+            logging.debug(f"Current positions: {current_positions}.")
 
             # Create a list of locations that can be found on this loop.
             # Location format: {"column": (1), "positions": [1]}
@@ -341,11 +342,10 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
             
             # What if a location points to the column name? The positions are effectively wildcards.
             # reference: https://stackoverflow.com/a/58265773
-            [
-             location.update(positions=current_positions)
-             for location in next_viable_locations
-             if location['positions']==[0]
-            ]
+            for location in next_viable_locations:
+                if 0 in location['positions']:
+                    location['positions'].remove(0)
+                    location['positions'].extend(current_positions)
             logging.debug(f"Next wildcard locations: {next_viable_locations}.")
 
             # Maybe I should expand my locations. Currently I support multiple positions
