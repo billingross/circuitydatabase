@@ -431,12 +431,12 @@ def choose_loop(list_of_viable_edges, previous_node=None):
     return chosen_edges
 
 def make_a_loop(current_node, edges_dictionary, loop=[]):
-    logging.debug(current_node)
+    logging.debug(f"Making a loop from current node: {current_node}.")
     next_nodes = edges_dictionary[current_node]
     # [(((column), position), score)]
     # [(((1, 16), 2), 1)]
     logging.debug(f"Current loop: {loop}.")
-    logging.debug(f"Next nodes: {next_nodes}.")
+    logging.debug(f"Next potential nodes: {next_nodes}.")
     next_different_nodes = [node for node in next_nodes if node[0] != current_node]   
      
     maximum_score = max([node[1] for node in next_different_nodes])
@@ -455,8 +455,12 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
     
     logging.debug(f"Next node: {next_node}, first node: {loop[:1]}.")    
     if loop and next_node[0] in loop[:1][0]:
+        logging.debug(f"Completed loop: {loop}.")
         return tuple(loop)
     else:
+        # I add the next node without adding the current node
+        # because only the values in the edges_dictionary contain
+        # edge scores which I use for prioritization.
         loop.append(next_node)
         return make_a_loop(next_node[0], edges_dictionary, loop)
 
@@ -515,8 +519,12 @@ def create_dictionary_of_edges(edges):
 def create_loops_from_dictionary_edges(edges_dictionary):
     all_loops = []
     for start_node in edges_dictionary.keys():
+        logging.debug("===")
+        logging.debug(f"Making a loop from start node: {start_node}.")
         loop = make_a_loop(start_node, edges_dictionary, loop=[])
         all_loops.append(loop)
+        logging.debug(f"Length of all loops: {len(all_loops)}.")
+        logging.debug("===")
     return all_loops
 
 def calculate_loop_scores(loops):
@@ -589,6 +597,7 @@ def process_query(database, query):
     all_loops = create_loops_from_dictionary_edges(edges_dictionary) 
     #pdb.set_trace()
     cumulatively_scored_loops = calculate_loop_scores(all_loops)
+    logging.debug(f"Number of cumulatively scored loops: {len(cumulatively_scored_loops)}.")
 
     # Find the highest scored loops
     maximum_loop_score = max(loop[-1] for loop in cumulatively_scored_loops)
@@ -596,7 +605,9 @@ def process_query(database, query):
                         loop for loop 
                         in cumulatively_scored_loops
                         if loop[-1] == maximum_loop_score]
+    highest_scored_loops = list(set(highest_scored_loops))
     sorted(highest_scored_loops)
+    logging.debug(f"Highest scored loops: {highest_scored_loops}.")
 
     loop_columns = create_matrix_of_loop_columns(highest_scored_loops)
     transposed_loop_columns = transpose_matrix(loop_columns)
