@@ -615,7 +615,7 @@ def process_query(database, query):
     #pdb.set_trace()
 
     # Find the highest scored loops
-    maximum_loop_score = max(loop[-1] for loop in cumulatively_scored_loops)
+    maximum_loop_score = max([loop[-1] for loop in cumulatively_scored_loops])
     highest_scored_loops = [
                         loop for loop 
                         in cumulatively_scored_loops
