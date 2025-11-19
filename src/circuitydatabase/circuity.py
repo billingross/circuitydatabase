@@ -443,8 +443,8 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
     next_nodes = edges_dictionary.get(current_node)
     
     # What happens if I just throw out broken loops?
-    #if not next_nodes:
-    #    return None
+    if not next_nodes:
+        return None
 
     # [(((column), position), score)]
     # [(((1, 16), 2), 1)]
