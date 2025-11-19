@@ -13,7 +13,7 @@ import csv
 import json
 
 # Manipulate lists
-import random
+#import random
 import itertools
 from operator import itemgetter
 
@@ -348,12 +348,20 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                     location['positions'].extend(current_positions)
             logging.debug(f"Next wildcard locations: {next_viable_locations}.")
 
-            # Maybe I should expand my locations. Currently I support multiple positions
-            # per column. I can create separate items for all of those.
+            # Replace wildcard position with all possible next positions
+            if 0 in current_location["positions"]:
+                current_location["positions"].remove(0)
+                
+                all_next_positions = []
+                for location in next_viable_locations:
+                    all_next_positions.extend(location["positions"])
+                current_location["positions"].extend(all_next_positions)
+                
             start_pointers = [
                               (current_location["column"], position)
                               for position in current_location["positions"]
             ]
+                
             logging.debug(f"Start pointers: {start_pointers}.")
 
             end_pointers = []
@@ -435,8 +443,8 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
     next_nodes = edges_dictionary.get(current_node)
     
     # What happens if I just throw out broken loops?
-    if not next_nodes:
-        return None
+    #if not next_nodes:
+    #    return None
 
     # [(((column), position), score)]
     # [(((1, 16), 2), 1)]
@@ -604,6 +612,7 @@ def process_query(database, query):
     #pdb.set_trace()
     cumulatively_scored_loops = calculate_loop_scores(all_loops)
     logging.debug(f"Number of cumulatively scored loops: {len(cumulatively_scored_loops)}.")
+    #pdb.set_trace()
 
     # Find the highest scored loops
     maximum_loop_score = max(loop[-1] for loop in cumulatively_scored_loops)
