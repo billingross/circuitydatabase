@@ -65,28 +65,6 @@ def update_index(column, index_list, word_positions):
                 # I need to add this word to the index
                 index_list = add_new_word_to_index(word, column_name, position, index_list, word_positions)
 
-def update_database(column, index_list, word_index_positions):
-    # I will use the column name to add this word location to the index
-    column_name = column[0]
-
-    for position, this_string in enumerate(column):
-        try:
-            number = float(this_string)
-            return number
-        except:
-            this_string_positions = []
-            words = this_string.split(" ")
-    
-        for word in words:
-            new_word_location = {'column': column_name, 'position': position}
-            word_index_position = word_positions.get(word)
-            if word_index_position:
-                # Add new location dictionary to locations list
-                index_list[word_index_position]['locations'].append(new_word_location)
-            else:
-                # Add this word as a new item in the index_list
-                index_list = add_new_word_to_index(word, column_name, position, index_list, word_positions)
-
 def transpose_matrix(matrix):
     """Transpose a matrix represented as a list of lists.
 
@@ -275,17 +253,9 @@ def get_query_word_column_locations(query, index_list, word_positions):
         for column_name, positions in word_locations.items():
             metadata_column_locations = {
                 "column": tuple(convert_string_to_index_positions(column_name, word_positions)),
-                "positions": positions
+                "positions": positions.copy()
             }
             metadata_word_locations.append(metadata_column_locations)        
- 
-        """
-        metadata_word_locations = {
-            convert_string_to_index_positions(column_name, word_positions):
-            positions
-            for column_name, positions in word_locations.items()
-        }
-        """
         query_word_location_lists.append(metadata_word_locations)
         #logging.debug(f"Query word location lists: {query_word_location_lists}.")
     return query_word_location_lists
@@ -339,21 +309,28 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                                      in next_locations
                                      if location["column"] in columns_in_loop]
             logging.debug(f"Next viable locations: {next_viable_locations}.")
-            
-            # What if a location points to the column name? The positions are effectively wildcards.
+
+            # This chunk is breaking database["index_list"] somehow           
+            # It seems like by changing these locations I am directly
+            # changing the locations in the index.
+            # This confuses me because looped_query_word_locations is a copy 
+
+            # What if a location points to the column name?
+            # The positions are effectively wildcards.
             # reference: https://stackoverflow.com/a/58265773
-            for location in next_viable_locations:
-                if 0 in location['positions']:
-                    location['positions'].remove(0)
-                    location['positions'].extend(current_positions)
-            logging.debug(f"Next wildcard locations: {next_viable_locations}.")
+            next_wildcard_locations = next_viable_locations.copy()
+            for this_location in next_wildcard_locations:
+                if 0 in this_location['positions']:
+                    this_location['positions'].remove(0)
+                    this_location['positions'].extend(current_positions)
+            logging.debug(f"Next wildcard locations: {next_wildcard_locations}.")
 
             # Replace wildcard position with all possible next positions
             if 0 in current_location["positions"]:
                 current_location["positions"].remove(0)
                 
                 all_next_positions = []
-                for location in next_viable_locations:
+                for location in next_wildcard_locations:
                     all_next_positions.extend(location["positions"])
                 current_location["positions"].extend(all_next_positions)
                 
@@ -361,11 +338,10 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                               (current_location["column"], position)
                               for position in current_location["positions"]
             ]
-                
             logging.debug(f"Start pointers: {start_pointers}.")
 
             end_pointers = []
-            for location in next_viable_locations:
+            for location in next_wildcard_locations:
                 for position in location['positions']:
                     end_pointers.append((location["column"], position))
             logging.debug(f"End pointers: {end_pointers}.")
@@ -374,7 +350,6 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
             logging.debug(f"Endpoint pairs: {endpoint_pairs}.")
 
             endpoint_scores = [
-                               #calculate_positions_score(endpoints[0][1], endpoints[1][1])
                                calculate_endpoints_score(endpoints[0], endpoints[1])
                                for endpoints in endpoint_pairs
             ]
@@ -595,14 +570,21 @@ def process_query(database, query):
     word_positions = database["word_positions"]
     metadata_column_dictionary = database["metadata_column_dictionary"]
 
-    query_word_locations_list = get_query_word_column_locations(query, index_list, word_positions)
+    query_word_locations_list = get_query_word_column_locations(
+                                                                query,
+                                                                index_list,
+                                                                word_positions)
     logging.debug(f"Query word location lists: {query_word_locations_list}.")
 
-    looped_query_locations_list = query_word_locations_list.copy()
-    looped_query_locations_list.append(looped_query_locations_list[0])
+    looped_query_word_locations = query_word_locations_list.copy()
+    looped_query_word_locations.append(looped_query_word_locations[0])
 
     # Find paths between adjacent seach terms
-    edges = find_query_loops(metadata_column_dictionary, looped_query_locations_list)
+    logging.debug("Calling find_query_loops().")
+    edges = find_query_loops(
+                             metadata_column_dictionary,
+                             looped_query_word_locations)
+    logging.debug("Calling create_dictionary_of_edges().")
     edges_dictionary = create_dictionary_of_edges(edges)
     logging.debug(f"Edges dictionary: {edges_dictionary}.")
     #pdb.set_trace()
@@ -613,8 +595,8 @@ def process_query(database, query):
     cumulatively_scored_loops = calculate_loop_scores(all_loops)
     logging.debug(f"Number of cumulatively scored loops: {len(cumulatively_scored_loops)}.")
     #pdb.set_trace()
-
-    # Find the highest scored loops
+   
+     # Find the highest scored loops
     maximum_loop_score = max([loop[-1] for loop in cumulatively_scored_loops])
     highest_scored_loops = [
                         loop for loop 
@@ -623,6 +605,7 @@ def process_query(database, query):
     highest_scored_loops = list(set(highest_scored_loops))
     sorted(highest_scored_loops)
     logging.debug(f"Highest scored loops: {highest_scored_loops}.")
+    logging.debug(len(str((database['index_list']))))
 
     loop_columns = create_matrix_of_loop_columns(highest_scored_loops)
     transposed_loop_columns = transpose_matrix(loop_columns)
@@ -649,6 +632,7 @@ def circuity(
     else:
         database = initialize_database()
         database = import_comma_separated_values(database, csv_path)
+        logging.debug(f"Database index: {database['index_list']}.")
         results = process_query(database, query)
         for result in results:
             print(result)
