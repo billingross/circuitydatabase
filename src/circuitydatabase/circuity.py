@@ -432,7 +432,12 @@ def choose_loop(list_of_viable_edges, previous_node=None):
 
 def make_a_loop(current_node, edges_dictionary, loop=[]):
     logging.debug(f"Making a loop from current node: {current_node}.")
-    next_nodes = edges_dictionary[current_node]
+    next_nodes = edges_dictionary.get(current_node)
+    
+    # What happens if I just throw out broken loops?
+    if not next_nodes:
+        return None
+
     # [(((column), position), score)]
     # [(((1, 16), 2), 1)]
     logging.debug(f"Current loop: {loop}.")
@@ -522,7 +527,8 @@ def create_loops_from_dictionary_edges(edges_dictionary):
         logging.debug("===")
         logging.debug(f"Making a loop from start node: {start_node}.")
         loop = make_a_loop(start_node, edges_dictionary, loop=[])
-        all_loops.append(loop)
+        if loop:
+            all_loops.append(loop)
         logging.debug(f"Length of all loops: {len(all_loops)}.")
         logging.debug("===")
     return all_loops
