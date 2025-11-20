@@ -235,7 +235,6 @@ def convert_string_to_index_positions(this_string, word_positions):
 def get_query_word_column_locations(query, index_list, word_positions):
     # Constitute an index dictionary
     index_dictionary = {item["word"]: item["locations"] for item in index_list}
-    #logging.debug(f"Index dictionary: {index_dictionary}.")
     
     query_words = query.split()
 
@@ -286,6 +285,8 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
     """
     edges_list = []
     for query_word_position, query_word_locations in enumerate(looped_query_word_locations):
+        # Here query_word_locations is a list of locations that corresponds
+        # to the query word.
         if query_word_position >= len(looped_query_word_locations) - 1:
             break
         
@@ -310,13 +311,8 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
                                      if location["column"] in columns_in_loop]
             logging.debug(f"Next viable locations: {next_viable_locations}.")
 
-            # This chunk is breaking database["index_list"] somehow           
-            # It seems like by changing these locations I am directly
-            # changing the locations in the index.
-            # This confuses me because looped_query_word_locations is a copy 
-
-            # What if a location points to the column name?
-            # The positions are effectively wildcards.
+            # If a location points to the column name at index zero
+            # then the positions are effectively wildcards.
             # reference: https://stackoverflow.com/a/58265773
             next_wildcard_locations = next_viable_locations.copy()
             for this_location in next_wildcard_locations:
@@ -381,6 +377,7 @@ def find_query_loops(metadata_column_dictionary, looped_query_word_locations):
             edges_list.append(max_score_edges)
             logging.debug(f"Max score edges: {max_score_edges}.")
             logging.debug("===")
+            #pdb.set_trace()
     return edges_list
 
 def calculate_edge_score(edge, edge_position, column_position_dictionaries):
@@ -440,7 +437,16 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
     #    next_node = random.choice(positive_nodes)
     #else:
     #    next_node = random.choice(negative_nodes)
-    
+
+    for next_node in maximum_score_nodes:
+        logging.debug(f"Next node: {next_node}, first node: {loop[:1]}.")
+        if loop and next_node[0] in loop[:1][0]:
+            return tuple(loop)
+        else:
+            loop.append(next_node)
+    return make_a_loop(next_node[0], edges_dictionary, loop)
+
+    """Old logic.
     logging.debug(f"Next node: {next_node}, first node: {loop[:1]}.")    
     if loop and next_node[0] in loop[:1][0]:
         logging.debug(f"Completed loop: {loop}.")
@@ -451,6 +457,7 @@ def make_a_loop(current_node, edges_dictionary, loop=[]):
         # edge scores which I use for prioritization.
         loop.append(next_node)
         return make_a_loop(next_node[0], edges_dictionary, loop)
+    """
 
 def import_comma_separated_values(database, csv_file_path):
     index_list = database["index_list"]
@@ -507,7 +514,7 @@ def create_dictionary_of_edges(edges):
 def create_loops_from_dictionary_edges(edges_dictionary):
     all_loops = []
     for start_node in edges_dictionary.keys():
-        logging.debug("===")
+        #logging.debug("===")
         logging.debug(f"Making a loop from start node: {start_node}.")
         loop = make_a_loop(start_node, edges_dictionary, loop=[])
         if loop:
@@ -565,6 +572,50 @@ def convert_loop_into_string(database, loop_nodes):
     result = " ".join(result_string)
     return result
 
+def convert_loop_into_dictionary(database, loop_nodes):
+    """Convert a loop into a dictionary.
+
+    Convert a loop into a dictionary so that I can share
+    result values as well as column names.
+
+    Args:
+        database (dict): Dictionary of persistent database resources.
+        loop_nodes (list): Locations of all the nodes in the loop.
+
+    Returns:
+        (dict): Dictionary of column names and loop values.
+    """
+    result_dictionary = {}
+    metadata_column_dictionary = database["metadata_column_dictionary"]
+    index_list = database["index_list"]
+
+    for node in loop_nodes:
+        column = node[0][0]
+        position = node[0][1]
+        column_locations = metadata_column_dictionary[column][0]
+        value = metadata_column_dictionary[column][position]
+        
+        column_words = [
+                        index_list[position]['word'] 
+                        for position
+                        in column_locations['positions'][1:]
+        ]
+        column_name = " ".join(column_words)
+
+        if isinstance(value, dict):
+            values = []
+            for position in value['positions']:
+                value = index_list[position]['word']
+                values.append(value)
+            value = " ".join(values)
+        else:
+            value = str(value)
+        
+        logging.debug(f"Column name: {column_name}, value: {value}.")
+        #pdb.set_trace()
+        result_dictionary[column_name] = value
+    return result_dictionary
+
 def process_query(database, query):
     index_list = database["index_list"]
     word_positions = database["word_positions"]
@@ -605,7 +656,6 @@ def process_query(database, query):
     highest_scored_loops = list(set(highest_scored_loops))
     sorted(highest_scored_loops)
     logging.debug(f"Highest scored loops: {highest_scored_loops}.")
-    logging.debug(len(str((database['index_list']))))
 
     loop_columns = create_matrix_of_loop_columns(highest_scored_loops)
     transposed_loop_columns = transpose_matrix(loop_columns)
@@ -614,7 +664,8 @@ def process_query(database, query):
     loops_to_return = [highest_scored_loops[loop_index] for loop_index in loop_indexes]
 
     loops_nodes = [loop[0] for loop in loops_to_return]
-    results = [convert_loop_into_string(database, loop_nodes) for loop_nodes in loops_nodes]
+    #results = [convert_loop_into_string(database, loop_nodes) for loop_nodes in loops_nodes]
+    results = [convert_loop_into_dictionary(database, loop_nodes) for loop_nodes in loops_nodes]
     return results
 
 def circuity(
@@ -632,8 +683,15 @@ def circuity(
     else:
         database = initialize_database()
         database = import_comma_separated_values(database, csv_path)
-        logging.debug(f"Database index: {database['index_list']}.")
+        #logging.debug(f"Database index: {database['index_list']}.")
         results = process_query(database, query)
-        for result in results:
-            print(result)
-
+        merged_results_dictionary = {
+                                      key: [dict[key] for dict in results] 
+                                      for key in results[0]
+        }
+        result_values_matrix = transpose_matrix(list(merged_results_dictionary.values()))
+        #pdb.set_trace()
+        
+        print(",".join(merged_results_dictionary.keys()))
+        for result_values_list in result_values_matrix:
+            print(",".join(result_values_list))
