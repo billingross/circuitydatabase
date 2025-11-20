@@ -1,6 +1,6 @@
 [project]
 name = "circuitydatabase"
-version = "14"
+version = "15"
 dependencies = [
     "typer",
 ]
