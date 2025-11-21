@@ -484,6 +484,11 @@ def import_comma_separated_values(database, csv_file_path):
     looped_row_matrix = add_loop_name_to_first_row_of_matrix(csv_file_path, row_matrix)
     column_matrix = transpose_matrix(looped_row_matrix)
     
+    column_name_words = [name.split(" ")[1:] for name in row_matrix[0]]
+    column_names = [" ".join(words) for words in column_name_words]
+    database["column_names"] = column_names
+    #pdb.set_trace()   
+ 
     for column in column_matrix:
         update_index(column, index_list, word_positions)    
 
@@ -688,16 +693,43 @@ def process_query(database, query):
 def circuity(
             csv_path: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "https://storage.googleapis.com/espn-data/espn-nfl-rosters.csv",
             query: Annotated[str, typer.Option(help="A database query")] = "",
-            debug: Annotated[bool, typer.Option(help="Set logging level to debug")] = False
+            debug: Annotated[bool, typer.Option(help="Set logging level to debug")] = False,
+            columns: Annotated[bool, typer.Option(help="Show column names")] = False,
+            examples: Annotated[bool, typer.Option(help="Show example queries")] = False
 ):
     if debug:
         logging.basicConfig(level=logging.DEBUG)
+    
+    if examples:
+        example_queries = {
+            "robert hainsey college": "Get the college that Robert Hainsey attended.",
+            "trevor lawrence years of experience": "Get the number of years Trevor Lawrence has played in the National Football League.",
+            "nick mullens height": "Get the height values of Nick Mullens.",
+            "jaguars quarterback age": "Get the ages of all the quarterbacks on the Jacksonville Jaguars.",
+            "jaguars wide receiver name age": "Get the names and ages of all the wide receivers on the Jacksonville Jaguars."
+        }
+        print("These are example queries designed to work with the default ESPN National Football League roster dataset available at https://storage.googleapis.com/espn-data/espn-nfl-rosters.csv.")
+        print("Example database query: description")
+        print("=")
+        for example_query, description in example_queries.items():
+            print(f"'{example_query}': {description}")
+        print("===")
+    """
     if not csv_path or not query:
         print(
               "I must provide the path to a comma separated values "
               "file with the data I would like to query as well as my "
               "query like so: '$circuity --csv-path data/players.csv --query 'justin age'.")
     else:
+    """
+
+    if columns:
+        database = initialize_database()
+        database = import_comma_separated_values(database, csv_path)    
+        print(f"Column names: {database['column_names']}.")
+        print("===")
+
+    if query:
         database = initialize_database()
         database = import_comma_separated_values(database, csv_path)
         #logging.debug(f"Database index: {database['index_list']}.")
