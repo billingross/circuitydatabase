@@ -6,11 +6,12 @@ import logging
 
 # Manipulate files
 import os
-from pathlib import Path
-# Read comma separated values file
+import re
 import csv
-# Manipulate the database structures
-import json
+from pathlib import Path
+
+# Handle remote files
+from urllib.request import urlopen
 
 # Manipulate lists
 #import random
@@ -94,12 +95,27 @@ def initialize_database():
             "word_positions": word_positions
     }
 
-def read_comma_separated_values_file_to_matrix(csv_file):
+def read_comma_separated_values_file_to_matrix(csv_path):
+    if re.search("^https://", csv_path):
+        # Handle remote objects
+        # Reference: https://bobbyhadz.com/blog/read-csv-file-from-url-using-python#reading-a-csv-file-from-a-url-using-csv-and-urllib
+        response = urlopen(csv_path)
+        lower_stream = (line.decode('utf-8').lower() for line in response.readlines())
+    else:
+        # Handle local objects
+        with open(csv_path, 'r') as csv_handle:
+            lower_stream = (line.decode('utf-8').lower() for line in response.readlines())
+    # Read data comma separated values into a matrix of rows
+    csv_reader = csv.reader(lower_stream)
+    return [row for row in csv_reader]
+
+    """
     # Read file into a matrix of rows
     with open(csv_file, 'r') as csv_handle:
         lower_stream = (line.lower() for line in csv_handle)
         csv_reader = csv.reader(lower_stream)
         return [row for row in csv_reader]
+    """
 
 def add_loop_name_to_first_row_of_matrix(csv_file_path, matrix):
     stem_name = Path(csv_file_path).stem
@@ -670,7 +686,7 @@ def process_query(database, query):
     return results
 
 def circuity(
-            csv_path: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "",
+            csv_path: Annotated[str, typer.Option(help="The path to a comma separated values file to import")] = "https://storage.googleapis.com/espn-data/espn-nfl-rosters.csv",
             query: Annotated[str, typer.Option(help="A database query")] = "",
             debug: Annotated[bool, typer.Option(help="Set logging level to debug")] = False
 ):
