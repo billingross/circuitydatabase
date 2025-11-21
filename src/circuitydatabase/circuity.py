@@ -97,7 +97,8 @@ def initialize_database():
 def read_comma_separated_values_file_to_matrix(csv_file):
     # Read file into a matrix of rows
     with open(csv_file, 'r') as csv_handle:
-        csv_reader = csv.reader(csv_handle)
+        lower_stream = (line.lower() for line in csv_handle)
+        csv_reader = csv.reader(lower_stream)
         return [row for row in csv_reader]
 
 def add_loop_name_to_first_row_of_matrix(csv_file_path, matrix):
