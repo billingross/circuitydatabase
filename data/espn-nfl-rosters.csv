@@ -1,29 +1,29 @@
 first name,last name,number,position,age,height feet,height inches,weight in pounds,years of experience,college,team
-Trevor,Lawrence,16,QB,26,6,6,220,5,Clemson,Jacksonville Jaguars
-Nick,Mullens,14,QB,30,6,0,210,7,The University of Southern Mississippi,Jacksonville Jaguars
-LeQuint,Allen Jr.,36,RB,21,6,0,201,0,Syracuse,Jacksonville Jaguars
-Travis,Etienne Jr.,1,RB,26,5,10,215,5,Clemson,Jacksonville Jaguars
-Cody,Schrader,32,RB,26,5,9,214,2,Missouri,Jacksonville Jaguars
-Bhayshul,Tuten,33,RB,22,5,9,209,0,Virginia Tech,Jacksonville Jaguars
-Dyami,Brown,5,WR,26,6,0,195,5,North Carolina,Jacksonville Jaguars
-Tim,Jones,13,WR,27,6,1,200,4,The University of Southern Mississippi,Jacksonville Jaguars
-Jakobi,Meyers,3,WR,28,6,2,200,7,North Carolina State,Jacksonville Jaguars
-Tim,Patrick,17,WR,31,6,5,210,8,Utah,Jacksonville Jaguars
-Brian,Thomas Jr.,7,WR,23,6,2,209,2,Louisiana State University,Jacksonville Jaguars
-Austin,Trammell,81,WR,27,5,10,185,3,Rice,Jacksonville Jaguars
-Parker,Washington,11,WR,23,5,10,204,3,Penn State,Jacksonville Jaguars
-Hunter,Long,84,TE,27,6,5,243,5,Boston College,Jacksonville Jaguars
-Quintin,Morris,80,TE,26,6,2,243,4,Bowling Green,Jacksonville Jaguars
-Johnny,Mundt,86,TE,30,6,4,243,8,Oregon,Jacksonville Jaguars
-Robert,Hainsey,73,C,27,6,4,306,5,Notre Dame,Jacksonville Jaguars
-Jonah,Monheim,60,C,23,6,5,310,0,University of Southern California,Jacksonville Jaguars
-Ezra,Cleveland,76,G,27,6,6,312,6,Boise State,Jacksonville Jaguars
-Chuma,Edoga,55,G,28,6,4,315,7,University of Southern California,Jacksonville Jaguars
-Patrick,Mekari,65,G,28,6,4,305,7,California,Jacksonville Jaguars
-Wyatt,Milum,64,G,23,6,6,317,0,West Virginia,Jacksonville Jaguars
-Anton,Harrison,77,OT,23,6,4,315,3,Oklahoma,Jacksonville Jaguars
-Walker,Little,72,OT,26,6,7,325,5,Stanford,Jacksonville Jaguars
-Cole,Van Lanen,70,OT,27,6,5,312,5,Wisconsin,Jacksonville Jaguars
+Trevor,Lawrence,16,quarterback,26,6,6,220,5,Clemson,Jacksonville Jaguars
+Nick,Mullens,14,quarterback,30,6,0,210,7,The University of Southern Mississippi,Jacksonville Jaguars
+LeQuint,Allen Jr.,36,running back,21,6,0,201,0,Syracuse,Jacksonville Jaguars
+Travis,Etienne Jr.,1,running back,26,5,10,215,5,Clemson,Jacksonville Jaguars
+Cody,Schrader,32,running back,26,5,9,214,2,Missouri,Jacksonville Jaguars
+Bhayshul,Tuten,33,running back,22,5,9,209,0,Virginia Tech,Jacksonville Jaguars
+Dyami,Brown,5,wide receiver,26,6,0,195,5,North Carolina,Jacksonville Jaguars
+Tim,Jones,13,wide receiver,27,6,1,200,4,The University of Southern Mississippi,Jacksonville Jaguars
+Jakobi,Meyers,3,wide receiver,28,6,2,200,7,North Carolina State,Jacksonville Jaguars
+Tim,Patrick,17,wide receiver,31,6,5,210,8,Utah,Jacksonville Jaguars
+Brian,Thomas Jr.,7,wide receiver,23,6,2,209,2,Louisiana State University,Jacksonville Jaguars
+Austin,Trammell,81,wide receiver,27,5,10,185,3,Rice,Jacksonville Jaguars
+Parker,Washington,11,wide receiver,23,5,10,204,3,Penn State,Jacksonville Jaguars
+Hunter,Long,84,tight end,27,6,5,243,5,Boston College,Jacksonville Jaguars
+Quintin,Morris,80,tight end,26,6,2,243,4,Bowling Green,Jacksonville Jaguars
+Johnny,Mundt,86,tight end,30,6,4,243,8,Oregon,Jacksonville Jaguars
+Robert,Hainsey,73,center,27,6,4,306,5,Notre Dame,Jacksonville Jaguars
+Jonah,Monheim,60,center,23,6,5,310,0,University of Southern California,Jacksonville Jaguars
+Ezra,Cleveland,76,guard,27,6,6,312,6,Boise State,Jacksonville Jaguars
+Chuma,Edoga,55,guard,28,6,4,315,7,University of Southern California,Jacksonville Jaguars
+Patrick,Mekari,65,guard,28,6,4,305,7,California,Jacksonville Jaguars
+Wyatt,Milum,64,guard,23,6,6,317,0,West Virginia,Jacksonville Jaguars
+Anton,Harrison,77,offensive tackle,23,6,4,315,3,Oklahoma,Jacksonville Jaguars
+Walker,Little,72,offensive tackle,26,6,7,325,5,Stanford,Jacksonville Jaguars
+Cole,Van Lanen,70,offensive tackle,27,6,5,312,5,Wisconsin,Jacksonville Jaguars
 Cam,Little,39,place kicker,22,6,1,172,2,Arkansas,jacksonville jaguars
 Logan,Cooke,9,punter,30,6,5,230,8,Mississippi State,jacksonville jaguars
 Ross,Matiscik,46,long snapper,29,6,0,240,6,Baylor,jacksonville jaguars
