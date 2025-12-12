@@ -1,5 +1,5 @@
-# Non-sexual sponsorship
-I am going to click [this link](https://github.com/sponsors/billingross) and give you my money right now. I am horny for giving my money away.
+# Sponsor this project
+Follow [this link](https://github.com/sponsors/billingross) to support development of the Circuity Database Management System.
 
 # circuitydatabase
 Source for the Circuity Database designed to be distributed through PyPI.
@@ -33,4 +33,13 @@ Find an example comma separated values file with ESPN National Football League r
 ```
 % python3 -m build
 % twine upload dist/*
+```
+
+## Install unpublished changes
+```
+# Install existing pip versions of Circuity to avoid collisions
+% python3 -m pip uninstall circuitydatabase
+# Install Circuity from local source in the root directory
+% cd circuitydatabase
+% python3 -m pip install . --force
 ```

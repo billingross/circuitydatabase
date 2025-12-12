@@ -99,12 +99,12 @@ def read_comma_separated_values_file_to_matrix(csv_path):
     if re.search("^https://", csv_path):
         # Handle remote objects
         # Reference: https://bobbyhadz.com/blog/read-csv-file-from-url-using-python#reading-a-csv-file-from-a-url-using-csv-and-urllib
-        response = urlopen(csv_path)
-        lower_stream = (line.decode('utf-8').lower() for line in response.readlines())
+        csv_handle = urlopen(csv_path)
+        lower_stream = (line.decode('utf-8').lower() for line in csv_handle.readlines())
     else:
         # Handle local objects
         with open(csv_path, 'r') as csv_handle:
-            lower_stream = (line.decode('utf-8').lower() for line in response.readlines())
+            lower_stream = (line.lower() for line in csv_handle.readlines())
     # Read data comma separated values into a matrix of rows
     csv_reader = csv.reader(lower_stream)
     return [row for row in csv_reader]
